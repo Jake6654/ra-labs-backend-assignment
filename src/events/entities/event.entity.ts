@@ -22,7 +22,7 @@ export class Event {
   description?: string;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: EventStatus,
     default: EventStatus.TODO, // set the default status to TODO
   })
@@ -36,10 +36,10 @@ export class Event {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   startTime: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   endTime: Date;
 
   // By using an explicit join entity, avoid many-to-many relation for better extensibility.
