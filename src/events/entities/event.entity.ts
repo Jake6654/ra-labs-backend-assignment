@@ -17,19 +17,22 @@ export class Event {
   @Column()
   title: string;
 
+  // ? means that this field is optional
   @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column({
     type: 'enum',
     enum: EventStatus,
-    default: EventStatus.TODO,
+    default: EventStatus.TODO, // set the default status to TODO
   })
   status: EventStatus;
 
+  // timestamp for the first time
   @CreateDateColumn()
   createdAt: Date;
 
+  // This field changes whenever the record is modified
   @UpdateDateColumn()
   updatedAt: Date;
 
@@ -39,8 +42,7 @@ export class Event {
   @Column({ type: 'timestamp' })
   endTime: Date;
 
-  @OneToMany(() => EventInvite, (eventInvite) => eventInvite.event, {
-    cascade: true,
-  })
+  // By using an explicit join entity, avoid many-to-many relation for better extensibility.
+  @OneToMany(() => EventInvite, (eventInvite) => eventInvite.event)
   eventInvites: EventInvite[];
 }
