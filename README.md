@@ -1,98 +1,380 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Event Management Backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This project is a backend API built with **NestJS** and **TypeORM** that manages users and events.  
+Users can create events, invite participants, and merge overlapping events.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The main feature of this project is an **event merge algorithm** that detects overlapping or touching events for a specific user and merges them into a single event.
+
+---
+
+# Tech Stack
+
+Backend Framework  
+NestJS
+
+Language  
+TypeScript
+
+ORM  
+TypeORM
+
+Database  
+SQLite (for local development)
+
+Testing  
+Jest  
+Supertest (for e2e testing)
+
+Architecture Style  
+Modular NestJS architecture
+
+---
+
+# Project Structure
+```
+src
+│
+├── app.module.ts
+├── main.ts
+│
+├── users
+│   ├── users.module.ts
+│   ├── users.controller.ts
+│   ├── users.service.ts
+│   ├── dto
+│   │   └── create-user.dto.ts
+│   └── entities
+│       └── user.entity.ts
+│
+├── events
+│   ├── events.module.ts
+│   ├── events.controller.ts
+│   ├── events.service.ts
+│   ├── dto
+│   │   └── create-event.dto.ts
+│   └── entities
+│       └── event.entity.ts
+│
+├── event-invites
+│   └── entities
+│       └── event-invite.entity.ts
+│
+└── common
+    └── enums
+        └── event-status.enum.ts
+```
+The project follows a typical NestJS modular structure.
+
+Controllers handle HTTP requests  
+Services contain business logic  
+Entities represent database tables  
+DTOs validate incoming request data
+
+---
+
+# Database Design
+
+The system uses three main entities.
+
+## User
+
+Represents a user in the system.
+
+Attributes
+
+- id
+- name
+
+A user can be invited to multiple events.
+
+---
+
+## Event
+
+Represents an event with a time interval.
+
+Attributes
+
+- id
+- title
+- description
+- status
+- startTime
+- endTime
+
+An event can have multiple invited users.
+
+---
+
+## EventInvite (Join Table)
+
+Instead of using a direct many-to-many relation, a join entity is used.
+
+This design allows future extensions such as
+
+- invitation status
+- roles
+- RSVP responses
+
+Relationships
+
+User  
+1 → many → EventInvite
+
+Event  
+1 → many → EventInvite
+
+EventInvite  
+many → 1 → User  
+many → 1 → Event
+
+---
+
+# API Endpoints
+
+## Create User
+
+POST /users
+
+Example request
+```
+{
+"name": "Jake"
+}
+```
+---
+
+## Get User
+
+GET /users/:id
+
+---
+
+## Create Event
+
+POST /events
+
+Example request
+```
+{
+"title": "Team Meeting",
+"description": "Weekly sync",
+"status": "TODO",
+"startTime": "2026-03-13T02:00:00.000Z",
+"endTime": "2026-03-13T03:00:00.000Z",
+"inviteeIds": [1,2]
+}
+```
+
+---
+
+## Get Event
+
+GET /events/:id
+
+Returns the event along with invited users.
+
+---
+
+## Delete Event
+
+DELETE /events/:id
+
+---
+
+## Merge Events For User
+
+POST /events/merge/:userId
+
+This endpoint merges overlapping or touching events for the given user.
+
+Example
+
+Event A  
+02:00 - 03:00
+
+Event B  
+02:30 - 04:00
+
+Merged Result
+
+02:00 - 04:00
+
+---
+
+# Event Merge Algorithm
+
+The merge feature uses the classic **interval merging algorithm**.
+
+Steps
+
+1. Retrieve all events associated with a user.
+2. Sort events by startTime.
+3. Scan the list from left to right.
+4. If the next event overlaps or touches the current interval, merge them.
+5. Continue merging chained overlaps.
+6. Create a new merged event.
+7. Combine invitees from all merged events.
+8. Remove the original events from the database.
+
+---
+
+# Attribute Merging Strategy
+
+When multiple events are merged, attributes are combined as follows.
+
+## Title
+
+Titles are concatenated.
+
+Example
+
+```
+Event A | Event B
+```
+
+
+---
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Descriptions are concatenated if present.
 
-## Project setup
+---
 
-```bash
-$ npm install
+## Status
+
+A priority rule is applied.
+
+Priority order
+
+```
+IN_PROGRESS
+COMPLETED
+TODO
 ```
 
-## Compile and run the project
+If any merged event is IN_PROGRESS, the merged event becomes IN_PROGRESS.
 
-```bash
-# development
-$ npm run start
+---
 
-# watch mode
-$ npm run start:dev
+# Testing
 
-# production mode
-$ npm run start:prod
+The project includes **End-to-End tests** using Jest and Supertest.
+
+The tests simulate real HTTP requests to verify the behavior of the API.
+
+Covered endpoints
+
+- POST /users
+- POST /events
+- POST /events/merge/:userId
+
+Run tests with
+
+```
+npm run test:e2e
 ```
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+# Running the Project
 
-# e2e tests
-$ npm run test:e2e
+Install dependencies
 
-# test coverage
-$ npm run test:cov
+```
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+Start the server
+```
+npm strat:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Server runs at
+```
+http://localhost:3000
+```
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+# Example Workflow
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Example workflow for merging events
 
-## Support
+1 Create a user
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+POST /users
 
-## Stay in touch
+2 Create overlapping events
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+POST /events
 
-## License
+3 Merge events
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+POST /events/merge/:userId
+
+4 Retrieve merged result
+
+GET /events/:id
+
+---
+
+# Design Considerations
+
+This implementation focuses on
+
+- clean NestJS modular architecture
+- clear separation of controller and service layers
+- proper relational database design
+- algorithmic correctness for interval merging
+- maintainable and testable service logic
+
+---
+
+
+# Backend Architecture Diagram
+
+```mermaid
+flowchart TD
+
+Client[Client / API Request]
+
+Client --> Controller[Events Controller]
+
+Controller --> Service[Events Service]
+
+Service --> EventRepo[Event Repository]
+Service --> UserRepo[User Repository]
+Service --> InviteRepo[EventInvite Repository]
+
+EventRepo --> DB[(Database)]
+UserRepo --> DB
+InviteRepo --> DB
+```
+
+# Event Merge Flow Diagram
+```mermaid
+
+flowchart TD
+
+A[Fetch User Events]
+
+A --> B[Sort Events by startTime]
+
+B --> C{Overlap or Touch?}
+
+C -->|Yes| D[Merge Intervals]
+
+C -->|No| E[Start New Group]
+
+D --> F[Combine Attributes]
+
+F --> G[Save Merged Event]
+
+G --> H[Delete Old Events]
+```
+
+
+
+
