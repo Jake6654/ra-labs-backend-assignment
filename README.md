@@ -110,12 +110,6 @@ An event can have multiple invited users.
 
 Instead of using a direct many-to-many relation, a join entity is used.
 
-This design allows future extensions such as
-
-- invitation status
-- roles
-- RSVP responses
-
 Relationships
 
 User  
