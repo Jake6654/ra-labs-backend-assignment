@@ -10,7 +10,9 @@ import {
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { Event } from './entities/event.entity';
-
+/**
+ * This controller exposes the HTTP endpoints for creating, reading, and deleting events
+ */
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
@@ -28,5 +30,12 @@ export class EventsController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     return this.eventsService.remove(id);
+  }
+
+  @Post('merge/:userId')
+  mergeForUser(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<Event[]> {
+    return this.eventsService.mergeForUser(userId);
   }
 }
