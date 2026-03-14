@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { EventInvite } from 'src/event-invites/entities/event-invite.entity';
+import { EventInvite } from '../../event-invites/entities/event-invite.entity';
 
 @Entity() // defines the User database entity
 export class User {
