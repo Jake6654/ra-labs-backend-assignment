@@ -106,6 +106,9 @@ An event can have multiple invited users.
 
 ---
 
+## Database Schema
+![Database Schema](docs/diagrams/database-schema.png)
+
 ## EventInvite (Join Table)
 
 Instead of using a direct many-to-many relation, a join entity is used.
@@ -123,6 +126,7 @@ many → 1 → User
 many → 1 → Event
 
 ---
+
 
 # API Endpoints
 
@@ -368,6 +372,7 @@ F --> G[Save Merged Event]
 
 G --> H[Delete Old Events]
 ```
+# Data
 
 
 
