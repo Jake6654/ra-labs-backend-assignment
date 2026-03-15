@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 
-@Injectable()
+@Injectable() // Dependency Injection
 export class UsersService {
   constructor(
     @InjectRepository(User)
