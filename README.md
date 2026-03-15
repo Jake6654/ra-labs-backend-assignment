@@ -107,7 +107,7 @@ An event can have multiple invited users.
 ---
 
 ## Database Schema
-![Database Schema](docs/database-schema.png)
+![Database Schema](database-schema.png)
 
 ## EventInvite (Join Table)
 
