@@ -7,7 +7,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: true, // remove not existing fields in DTO class
       forbidNonWhitelisted: true,
       transform: true,
     }),

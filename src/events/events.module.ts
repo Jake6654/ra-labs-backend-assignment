@@ -8,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { EventInvite } from '../event-invites/entities/event-invite.entity';
 
 @Module({
+  // All repositories that are injected into the service must be registered in the module
   imports: [TypeOrmModule.forFeature([Event, User, EventInvite])],
   controllers: [EventsController],
   providers: [EventsService],
